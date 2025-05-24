@@ -24,9 +24,16 @@ class SensorDataReader:
 
     def configure_data_output(self):
         print("Configuring sensor data output...")
-
-        self.binary_output_register.rateDivisor = 1
-        self.binary_output_register.asyncMode.serial1 = 1
+        try:
+            print("Setting GPS antenna offset to [0.0, 0.0, 0.0]...")
+            self.sensor.write_gps_antenna_offset([0.0, 0.0, 0.0])
+            print("GPS antenna offset configured successfully.")
+        except Exception as e:
+            print(f"Error setting GPS antenna offset: {e}")
+            self.disconnect_sensor()
+            sys.exit(1)
+            self.binary_output_register.rateDivisor = 1
+            self.binary_output_register.asyncMode.serial1 = 1
 
         self.binary_output_register.gnss.gnss1TimeUtc = 1
         self.binary_output_register.gnss.gps1Tow = 1
@@ -69,7 +76,7 @@ class SensorDataReader:
                     current_fix = gnss_data.gnss1Fix
                     num_sats = gnss_data.gnss1NumSats
 
-                    if current_fix >= Registers.GNSS.GnssSolLla.Gnss1Fix.Fix3D and num_sats >= 4:
+                    if current_fix >= 3 and num_sats >= 4:
                         print(f"3D GPS fix acquired! (Fix Type: {current_fix}, Satellites: {num_sats})")
                         return True
                     else:
